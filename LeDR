@@ -1,0 +1,31 @@
+
+int sensorValue = 0;
+
+void setup() {
+  // put your setup code here, to run once:
+  pinMode(A0, INPUT);
+  pinMode(13, OUTPUT);
+  Serial.begin(9600);
+
+
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  // read value of from sensor
+  sensorValue = analogRead (A0);
+ // print the sensor value reading to know its range  
+ Serial.println (sensorValue);
+
+ // mapping the sensor reading to set range for the LED
+ int fade = map(sensorValue, 50, 900, 200, 10);
+ Serial.println (fade);
+
+ analogWrite(13, fade);
+ delay(100);
+
+
+
+
+}
