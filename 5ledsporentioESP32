@@ -1,0 +1,41 @@
+int potValue = 0;
+int ledLevel = 0;
+
+int leds[] = {15, 2, 0, 4, 16};
+
+void setup() {
+
+  pinMode(15, OUTPUT);
+  pinMode(2, OUTPUT);
+  pinMode(0, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(16, OUTPUT);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+
+  // Read the potentiometer
+  potValue = analogRead(34);
+
+  // Convert 0-4095 into 0-4
+  ledLevel = map(potValue, 0, 4095, 0, 4);
+
+  // Turn OFF all LEDs
+  for (int i = 0; i < 5; i++) {
+    digitalWrite(leds[i], LOW);
+  }
+
+  // Turn ON only the selected LED
+  digitalWrite(leds[ledLevel], HIGH);
+
+  // Display the values in Serial Monitor
+  Serial.print("Potentiometer: ");
+  Serial.print(potValue);
+
+  Serial.print(" | LED: ");
+  Serial.println(ledLevel + 1);
+
+  delay(50);
+}
