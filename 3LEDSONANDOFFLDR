@@ -1,0 +1,61 @@
+const int ldrPin = 34;   // coonected pin 34 and 3.3v(resisto on 34pin to ground)
+const int led1 = 15;
+const int led2 = 2;
+const int led3 = 0;
+const int led4 = 4;
+const int led5 = 16;
+
+
+int ldrValue = 0;
+int mode = 0;
+
+void setup() {
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+  pinMode(led3, OUTPUT);
+  pinMode(led4, OUTPUT);
+  pinMode(led5, OUTPUT);
+}
+
+void loop() {
+  ldrValue = analogRead(ldrPin); // 0 (dark) to 4095 (bright)
+
+  // Decide mode based on light level
+  if (ldrValue < 1200) {
+    mode = 0;   // dark
+  } else if (ldrValue < 2800) {
+    mode = 1;   // medium light
+  } else {
+    mode = 2;   // bright
+  }
+
+  // Control LEDs based on mode
+  switch (mode) {
+    case 0: // Dark - all OFF
+      digitalWrite(led1, LOW);
+      digitalWrite(led2, LOW);
+      digitalWrite(led3, LOW);
+      digitalWrite(led4, LOW);
+      digitalWrite(led5, LOW);
+ delay(100);
+      break;
+
+    case 1: // Medium light - LED2 ON
+      digitalWrite(led1, HIGH);
+      digitalWrite(led5, HIGH);
+      digitalWrite(led2, HIGH);
+      digitalWrite(led4, HIGH);
+      digitalWrite(led3, HIGH);
+      delay(300);
+      break;
+
+    case 2: // Bright - LED1 and LED3 ON
+      digitalWrite(led1, LOW);
+      digitalWrite(led2, LOW);
+      digitalWrite(led3, LOW);
+      digitalWrite(led4, LOW);
+      digitalWrite(led5, LOW);
+      delay(100);
+      break;
+  }
+}
