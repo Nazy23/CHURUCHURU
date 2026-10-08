@@ -1,120 +1,110 @@
-// ==================================================
-// SUMOBOT
-// LINE SENSOR + ULTRASONIC ATTACK
-// ADJUSTABLE NORMAL SPEED + ATTACK SPEED
-// ==================================================
+/*
 
+TEAM DREAM SUMOBOT
+ROBOT NAME: 
 
-// ===============================
+MEMBERS:
+Ann Arcalas
+Nataniel Mapa
+Nazren Sorio
+
+Wires Connection Color code
+
+MOTOR PINS
+EN1 white
+EN2 green
+EN3 blue
+EN4 violet
+
+ENA orange
+ENB brown
+
+FLOOR SENSOR
+leftIR yellow
+rightIR yellow
+
+SIDES SENSOR
+left
+right
+
+BACK SENSOR 
+==============================
+*/
+
 // MOTOR PINS
-// ===============================
 
-int motor1pin1 = 8;    // LEFT MOTOR
-int motor1pin2 = 9;
+int motor1pin1 = 8;    // LEFT MOTOR EN1 white
+int motor1pin2 = 9;    // EN2 green
 
-int motor2pin1 = 10;   // RIGHT MOTOR
-int motor2pin2 = 11;
+int motor2pin1 = 10;   // RIGHT MOTOR EN3 blue
+int motor2pin2 = 11;   // EN4 violet
 
-
-// ===============================
 // ENA / ENB SPEED PINS
-// ===============================
 
-int ENA = 5;    // LEFT MOTOR SPEED
-int ENB = 3;    // RIGHT MOTOR SPEED
+int ENA = 5;    // LEFT MOTOR SPEED, orange
+int ENB = 3;    // RIGHT MOTOR SPEED, brown
 
-
-// ===============================
 // SPEED SETTINGS
-// ===============================
 
-// Normal movement / searching speed
-int motorSpeed = 200;
-
-// Attack speed
-// 255 = maximum 
+int motorSpeed = 255;
 int attackSpeed = 255;
 
+// FLOOR SENSOR PINS
 
-// ===============================
-// ANALOG IR SENSOR PINS
-// ===============================
+int leftIR = A0; // yellow
+int rightIR = A1; // yellow 
 
-int leftIR = A0;
-int rightIR = A1;
-
-// Adjust based on your sensor readings
 int threshold = 500;
 
+// ULTRASONIC SENSOR
 
-// ===============================
-// ULTRASONIC SENSOR PINS
-// ===============================
+int trigPin = 6; // purple
+int echoPin = 7;  // brown
 
-int trigPin = 6;
-int echoPin = 7;
-
-// Opponent detection distance
 int attackDistance = 75;
 
+// U-TURN SETTINGS
 
-// ===============================
+// How long the robot reverses before turning
+int reverseTime = 500;
+
+// How long the robot turns
+int turnTime = 400;
+
 // SETUP
-// ===============================
 
 void setup() {
 
   Serial.begin(9600);
 
-  // Motor pins
   pinMode(motor1pin1, OUTPUT);
   pinMode(motor1pin2, OUTPUT);
 
   pinMode(motor2pin1, OUTPUT);
   pinMode(motor2pin2, OUTPUT);
 
-  // ENA / ENB
   pinMode(ENA, OUTPUT);
   pinMode(ENB, OUTPUT);
 
-  // Ultrasonic
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
 
-  // Stop motors at startup
   stopLeft();
   stopRight();
 
-  Serial.println("=================================");
-  Serial.println("SUMOBOT READY");
-  Serial.println("LINE SENSOR + ULTRASONIC ATTACK");
-  Serial.println("=================================");
-
-  Serial.print("Normal Speed: ");
-  Serial.println(motorSpeed);
-
-  Serial.print("Attack Speed: ");
-  Serial.println(attackSpeed);
+  Serial.println("=== SUMOBOT READY ===");
 }
 
-
-// ===============================
 // MAIN LOOP
-// ===============================
 
 void loop() {
 
-  // =================================
-  // READ LINE SENSORS
-  // =================================
-
+  // READ FLOOR SENSORS
+ 
   int leftSensor = analogRead(leftIR);
   int rightSensor = analogRead(rightIR);
 
-
-  // =================================
   // READ ULTRASONIC
-  // =================================
 
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
@@ -129,23 +119,28 @@ void loop() {
   int distance;
 
   if (duration == 0) {
-
     distance = 999;
-
-  } else {
-
+  }
+  else {
     distance = duration * 0.0343 / 2;
   }
 
 
   // =================================
-  // SERIAL MONITOR
+  // SENSOR LOGIC
+  // BLACK = SAFE
+  // WHITE = EDGE
   // =================================
 
-  Serial.print("LEFT IR: ");
+  bool leftBlack = leftSensor > threshold;
+  bool rightBlack = rightSensor > threshold;
+
+  // SERIAL MONITOR
+
+  Serial.print("LEFT: ");
   Serial.print(leftSensor);
 
-  Serial.print(" | RIGHT IR: ");
+  Serial.print(" | RIGHT: ");
   Serial.print(rightSensor);
 
   Serial.print(" | DISTANCE: ");
@@ -153,85 +148,89 @@ void loop() {
 
   Serial.println(" cm");
 
-
-  // =================================
-  // LINE SENSOR LOGIC
-  //
-  // HIGH VALUE = BLACK
-  // LOW VALUE  = WHITE
-  // =================================
-
-  bool leftBlack = leftSensor > threshold;
-  bool rightBlack = rightSensor > threshold;
-
-
-  // ==================================================
-  // LEFT WHITE + RIGHT BLACK
-  // LEFT REVERSE / RIGHT STOP
-  // ==================================================
+  // LEFT SENSOR DETECTS WHITE
+  // U-TURN TO THE RIGHT
 
   if (!leftBlack && rightBlack) {
 
-    Serial.println("WHITE + BLACK -> LEFT REVERSE / RIGHT STOP");
+    Serial.println("LEFT WHITE -> U-TURN RIGHT");
 
+    // First move away from edge
     leftReverse();
+    rightReverse();
+
+    delay(reverseTime);
+
+    // Turn RIGHT
+    leftForward();
+    rightReverse();
+
+    delay(turnTime);
+
+    stopLeft();
     stopRight();
   }
 
-
-  // ==================================================
-  // LEFT BLACK + RIGHT WHITE
-  // LEFT STOP / RIGHT REVERSE
-  // ==================================================
+  // RIGHT SENSOR DETECTS WHITE
+  // U-TURN TO THE LEFT
 
   else if (leftBlack && !rightBlack) {
 
-    Serial.println("BLACK + WHITE -> LEFT STOP / RIGHT REVERSE");
+    Serial.println("RIGHT WHITE -> U-TURN LEFT");
+
+    // First move away from edge
+    leftReverse();
+    rightReverse();
+
+    delay(reverseTime);
+
+    // Turn LEFT
+    leftReverse();
+    rightForward();
+
+    delay(turnTime);
 
     stopLeft();
-    rightReverse();
+    stopRight();
   }
 
-
-  // ==================================================
-  // BOTH WHITE
-  // BOTH REVERSE
-  // ==================================================
+  // BOTH SENSORS DETECT WHITE
+  // REVERSE THEN TURN
 
   else if (!leftBlack && !rightBlack) {
 
-    Serial.println("WHITE + WHITE -> BOTH REVERSE");
+    Serial.println("BOTH WHITE -> REVERSE + U-TURN");
 
+    // Move away from edge
     leftReverse();
     rightReverse();
+
+    delay(reverseTime);
+
+    // Turn around
+    leftForward();
+    rightReverse();
+
+    delay(turnTime);
+
+    stopLeft();
+    stopRight();
   }
 
-
-  // ==================================================
-  // BOTH BLACK
-  // SAFE AREA
-  // CHECK ULTRASONIC
-  // ==================================================
+  // BOTH BLACK = SAFE
 
   else if (leftBlack && rightBlack) {
 
-    // =================================
     // OPPONENT DETECTED
-    // ATTACK!
-    // =================================
 
     if (distance <= attackDistance) {
 
-      Serial.println("OPPONENT DETECTED -> MAXIMUM ATTACK!");
+      Serial.println("OPPONENT DETECTED -> ATTACK!");
 
       attackForward();
     }
 
-
-    // =================================
-    // NO OPPONENT
-    // ORIGINAL SEARCHING BEHAVIOR
-    // =================================
+    // SEARCHING FOR OPPONENT
 
     else {
 
@@ -242,17 +241,10 @@ void loop() {
     }
   }
 
-
-  delay(50);
+  delay(30);
 }
 
-
-// ==================================================
 // LEFT MOTOR
-// ==================================================
-
-
-// LEFT FORWARD
 
 void leftForward() {
 
@@ -263,8 +255,6 @@ void leftForward() {
 }
 
 
-// LEFT REVERSE
-
 void leftReverse() {
 
   digitalWrite(motor1pin1, LOW);
@@ -274,8 +264,6 @@ void leftReverse() {
 }
 
 
-// LEFT STOP
-
 void stopLeft() {
 
   digitalWrite(motor1pin1, LOW);
@@ -284,13 +272,7 @@ void stopLeft() {
   analogWrite(ENA, 0);
 }
 
-
-// ==================================================
 // RIGHT MOTOR
-// ==================================================
-
-
-// RIGHT FORWARD
 
 void rightForward() {
 
@@ -301,8 +283,6 @@ void rightForward() {
 }
 
 
-// RIGHT REVERSE
-
 void rightReverse() {
 
   digitalWrite(motor2pin1, LOW);
@@ -312,8 +292,6 @@ void rightReverse() {
 }
 
 
-// RIGHT STOP
-
 void stopRight() {
 
   digitalWrite(motor2pin1, LOW);
@@ -322,22 +300,19 @@ void stopRight() {
   analogWrite(ENB, 0);
 }
 
-
-// ==================================================
-// MAXIMUM ATTACK
-// ==================================================
+  // ATTACK FORWARD
 
 void attackForward() {
 
-  // LEFT MOTOR FORWARD
+  // LEFT MOTOR
   digitalWrite(motor1pin1, HIGH);
   digitalWrite(motor1pin2, LOW);
 
-  // RIGHT MOTOR FORWARD
+  // RIGHT MOTOR
   digitalWrite(motor2pin1, HIGH);
   digitalWrite(motor2pin2, LOW);
 
-  // ATTACK SPEED
+  // MAXIMUM ATTACK SPEED
   analogWrite(ENA, attackSpeed);
   analogWrite(ENB, attackSpeed);
 }
