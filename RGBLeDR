@@ -1,0 +1,91 @@
+// LDR Pin
+const int LDR_PIN = A0;
+
+// RGB LED Pins
+const int RED_PIN = 9;
+const int GREEN_PIN = 10;
+const int BLUE_PIN = 11;
+
+// LDR Threshold Values
+int threshold1 = 700;
+int threshold2 = 600;
+int threshold3 = 500;
+int threshold4 = 400;
+int threshold5 = 300;
+int threshold6 = 250;
+int threshold7 = 200;
+
+void setup() {
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+  pinMode(BLUE_PIN, OUTPUT);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+
+  int ldrValue = analogRead(LDR_PIN);
+
+  Serial.print("LDR Reading: ");
+  Serial.print(ldrValue);
+
+  if (ldrValue > threshold1) {
+
+    setColor(0, 0, 0);
+    Serial.println(" | Color: OFF");
+
+  }
+  else if (ldrValue > threshold2) {
+
+    setColor(0, 255, 0);
+    Serial.println(" | Color: GREEN");
+
+  }
+  else if (ldrValue > threshold3) {
+
+    setColor(0, 0, 255);
+    Serial.println(" | Color: BLUE");
+
+  }
+  else if (ldrValue > threshold4) {
+
+    setColor(0, 255, 255);
+    Serial.println(" | Color: CYAN");
+
+  }
+  else if (ldrValue > threshold5) {
+
+    setColor(255, 255, 0);
+    Serial.println(" | Color: YELLOW");
+
+  }
+  else if (ldrValue > threshold6) {
+
+    setColor(255, 0, 255);
+    Serial.println(" | Color: MAGENTA");
+
+  }
+  else if (ldrValue > threshold7) {
+
+    setColor(255, 0, 0);
+    Serial.println(" | Color: RED");
+
+  }
+  else {
+
+    setColor(255, 255, 255);
+    Serial.println(" | Color: WHITE");
+
+  }
+
+  delay(200);
+}
+
+void setColor(int red, int green, int blue) {
+
+  analogWrite(RED_PIN, red);
+  analogWrite(GREEN_PIN, green);
+  analogWrite(BLUE_PIN, blue);
+
+}
